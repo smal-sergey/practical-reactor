@@ -39,10 +39,9 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     public void behold_flatmap() {
         Hooks.enableContextLossTracking(); //used for testing - detects if you are cheating!
 
-        //todo: feel free to change code as you need
-        Mono<String> currentUserEmail = null;
         Mono<String> currentUserMono = getCurrentUser();
-        getUserEmail(null);
+        Mono<String> currentUserEmail = currentUserMono
+                .flatMap(this::getUserEmail);
 
         //don't change below this line
         StepVerifier.create(currentUserEmail)
@@ -59,9 +58,7 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void task_executor() {
-        //todo: feel free to change code as you need
-        Flux<Void> tasks = null;
-        taskExecutor();
+        Flux<Void> tasks = taskExecutor().flatMap(t -> t);
 
         //don't change below this line
         StepVerifier.create(tasks)
@@ -78,9 +75,8 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void streaming_service() {
-        //todo: feel free to change code as you need
-        Flux<Message> messageFlux = null;
-        streamingService();
+        Flux<Message> messageFlux = streamingService()
+                .flatMapMany(conn -> conn);
 
         //don't change below this line
         StepVerifier.create(messageFlux)
@@ -97,10 +93,10 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void i_am_rubber_you_are_glue() {
-        //todo: feel free to change code as you need
-        Flux<Integer> numbers = null;
-        numberService1();
-        numberService2();
+        Flux<Integer> numbers = numberService1()
+                .concatWith(numberService2());
+
+        numbers = numberService2().startWith(numberService1());
 
         //don't change below this line
         StepVerifier.create(numbers)
@@ -123,9 +119,8 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void task_executor_again() {
-        //todo: feel free to change code as you need
-        Flux<Void> tasks = null;
-        taskExecutor();
+        Flux<Void> tasks = taskExecutor()
+                .concatMap(t -> t);
 
         //don't change below this line
         StepVerifier.create(tasks)
@@ -141,13 +136,10 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void need_for_speed() {
-        //todo: feel free to change code as you need
-        Flux<String> stonks = null;
-        getStocksGrpc();
-        getStocksRest();
+        Flux<String> stocks = getStocksGrpc().or(getStocksRest());
 
         //don't change below this line
-        StepVerifier.create(stonks)
+        StepVerifier.create(stocks)
                     .expectNextCount(5)
                     .verifyComplete();
     }
@@ -159,13 +151,11 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void plan_b() {
-        //todo: feel free to change code as you need
-        Flux<String> stonks = null;
-        getStocksLocalCache();
-        getStocksRest();
+        Flux<String> stocks = getStocksLocalCache()
+                .switchIfEmpty(getStocksRest());
 
         //don't change below this line
-        StepVerifier.create(stonks)
+        StepVerifier.create(stocks)
                     .expectNextCount(6)
                     .verifyComplete();
 
@@ -178,9 +168,14 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void mail_box_switcher() {
-        //todo: feel free to change code as you need
-        Flux<Message> myMail = null;
-        mailBoxPrimary();
+        Flux<Message> myMail = mailBoxPrimary()
+                .switchOnFirst((signal, flux) -> {
+                    if (signal.hasValue()) {
+                        Message message = signal.get();
+                        return message != null && "spam".equals(message.metaData) ? mailBoxSecondary() : flux;
+                    }
+                    return flux;
+                });
         mailBoxSecondary();
 
         //don't change below this line
@@ -201,11 +196,8 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void instant_search() {
-        //todo: feel free to change code as you need
-        autoComplete(null);
         Flux<String> suggestions = userSearchInput()
-                //todo: use one operator only
-                ;
+                .switchMap(this::autoComplete);
 
         //don't change below this line
         StepVerifier.create(suggestions)
@@ -221,13 +213,12 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void prettify() {
-        //todo: feel free to change code as you need
-        //todo: use when,and,then...
-        Mono<Boolean> successful = null;
-
-        openFile();
-        writeToFile("0x3522285912341");
-        closeFile();
+        Mono<Boolean> successful = openFile()
+                .then(writeToFile("0x3522285912341"))
+                .then(closeFile())
+                .thenReturn(true)
+                .onErrorReturn(false)
+        ;
 
         //don't change below this line
         StepVerifier.create(successful)
@@ -244,10 +235,8 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
      */
     @Test
     public void one_to_n() {
-        //todo: feel free to change code as you need
-        Flux<String> fileLines = null;
-        openFile();
-        readFile();
+        Flux<String> fileLines = openFile()
+                .thenMany(readFile());
 
         StepVerifier.create(fileLines)
                     .expectNext("0x1", "0x2", "0x3")
@@ -262,7 +251,11 @@ public class c6_CombiningPublishers extends CombiningPublishersBase {
     public void acid_durability() {
         //todo: feel free to change code as you need
         Flux<String> committedTasksIds = null;
-        tasksToExecute();
+        tasksToExecute()
+//                .concatMap(t -> t.zipWith(commitTask()).fl)
+//                .switchMap(t -> t.map(this::commitTask).thenReturn(t))
+//                .flatMapSequential(t -> t)
+        ;
         commitTask(null);
 
         //don't change below this line
