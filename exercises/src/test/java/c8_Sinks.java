@@ -6,11 +6,7 @@ import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * In Reactor a Sink allows safe manual triggering of signals. We will learn more about multicasting and backpressure in
@@ -194,18 +190,11 @@ public class c8_Sinks extends SinksBase {
     public void emit_failure() throws InterruptedException {
         Sinks.Many<Integer> sink = Sinks.many().replay().all();
 
-        ExecutorService executorService = Executors.newCachedThreadPool();
-
-        List<Callable<Void>> tasks = new ArrayList<>();
         for (int i = 1; i <= 50; i++) {
             int finalI = i;
-            tasks.add(() -> {
-                sink.emitNext(finalI, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(300)));
-                return null;
-            });
+            new Thread(() -> sink.emitNext(finalI, (signalType, emitResult) -> emitResult
+                    .equals(Sinks.EmitResult.FAIL_NON_SERIALIZED))).start();
         }
-        executorService.invokeAll(tasks);
-        sink.tryEmitComplete();
 
         //don't change code below
         StepVerifier.create(sink.asFlux()

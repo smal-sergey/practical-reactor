@@ -73,7 +73,7 @@ public class c7_ErrorHandling extends ErrorHandlingBase {
     @Test
     public void under_the_rug() {
         Flux<String> messages = messageNode()
-                .onErrorComplete()
+                .onErrorResume(e -> Mono.empty())
         ;
 
         StepVerifier.create(messages)
