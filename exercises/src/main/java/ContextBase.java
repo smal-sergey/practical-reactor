@@ -36,6 +36,7 @@ public class ContextBase {
         public Integer page = 0;
 
         public Page(Integer page) {
+            System.out.println("Creating page " + page);
             if (page == 3) {
                 System.out.println("Page 3 is not available!");
                 throw new IllegalStateException("Page 3 is not available!");
